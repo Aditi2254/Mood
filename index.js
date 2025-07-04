@@ -467,15 +467,29 @@ var insertSavedPlaylistSchema = z.object({
 
 // index.ts
 var app = express();
+// ...existing code...
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" ? [
-    process.env.CLIENT_URL || "https://mood-tune.vercel.app",
-    "https://mood-tune.vercel.app",
-    // Allow any vercel.app domain for flexibility
-    /\.vercel\.app$/
-  ] : "http://localhost:5173",
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      process.env.CLIENT_URL || "https://mood-tune.vercel.app",
+      "https://mood-tune.vercel.app",
+      "https://moody-coral.vercel.app", // <-- your actual frontend
+      "http://localhost:5173"
+    ];
+    // Allow any *.vercel.app domain
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      /^https:\/\/.*\.vercel\.app$/.test(origin)
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
+// ...existing code...
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
